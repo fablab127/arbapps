@@ -139,7 +139,6 @@ class TetrisIa(Tetris):
             keep_old_grid_empty = deepcopy(self.old_grid_empty)
             keep_old_grid_filled = deepcopy(self.old_grid_filled)
             keep_tetro = deepcopy(self.tetromino)
-            self.tetromino = Tetromino(0, self.width/2, self.height, self.width)
             self.build_best_world()
             self.make_dico_action()
 
