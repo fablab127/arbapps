@@ -91,6 +91,7 @@ class Optimizer():
 
 class TetrisIa(Tetris):
     def __init__(self, optimizer = None):
+        
         Tetris.__init__(self)
 
         # Delacherrie 
@@ -98,6 +99,8 @@ class TetrisIa(Tetris):
         else : self.optimizer = optimizer
         
     def build_best_world(self):
+        if self.grid == [] : 
+            self.grid = numpy.zeros([self.height, self.width], dtype=int)
         tetro_type = self.tetromino.type
         keep_grid = deepcopy(self.grid)
         keep_tetro = deepcopy(self.tetromino)
@@ -109,6 +112,7 @@ class TetrisIa(Tetris):
                 self.tetromino = deepcopy(keep_tetro)
                 for _ in range(rot) : self.rotate_current_tetro()
                 for y in range(self.width-len(self.tetromino.get_value()[0])+1):
+                    self.grid = deepcopy(keep_grid)
                     if all(self.grid[y][0:2] != 1):
                         self.grid = deepcopy(keep_grid)
                         self.tetromino = Tetromino(x, y, self.height, self.width, type_ = tetro_type)
@@ -161,29 +165,29 @@ class TetrisIa(Tetris):
 import random as rd
 
 def evolve():
-    print('good')
-    taille_pop = 5
+    taille_pop = 20
     n_epoch = 10
     muta_rate = 1/20
-    keep_perc = 0.5
+    keep_perc = 0.2
     keep_idx = int(taille_pop*keep_perc)
     pop = [Optimizer(*[0.2-np.random.random() for _ in range(6)]) for _ in range(taille_pop)]
     games = [TetrisIa(optimizer = optimizer) for optimizer in pop]
-    print('oh')
     for epoch in range(n_epoch):
-        for game in games :
+        print('Epoch %s' % epoch)
+        for i, game in enumerate(games) :
             t = time.time()
-            game.run(gui = False)
+            print(i, end=' : ') ; game.run(gui = False)
             print('Time elapsed : %s' % (round(time.time() - t)), end = ' ; ')
             print('Time spent building worlds : %s' % (round(game.timebuild)))
         games_sorted = sorted(games, reverse = True, key = lambda x : x.score)
+        print('Best : %s' % games_sorted[0].optimizer)
         keep = games_sorted[:keep_idx]
         games = deepcopy(keep)
-        for _ in range(taille_pop//2):
-            parents = [rd.choice(keep) for _ in range(2)]
-            child = Optimizer(*[rd.choice(parents[1].x, parents[2].x) for x in parents[1].parameters])
-            self.parameters[rd.randint(0,5)] += muta_rate*(2*np.random.random() - 1)
-            games.append(child)
+        for _ in range(len(games_sorted) - len(keep)):
+            parents = [rd.choice(keep).optimizer for _ in range(2)]
+            child = Optimizer(*[rd.choice([parents[0].parameters[i], parents[1].parameters[i]]) for i in range(6)])
+            child.parameters[rd.randint(0,5)] += muta_rate*(2*np.random.random() - 1)
+            games.append(TetrisIa(optimizer = child))
     for game in games : game.run(gui = False)
     return sorted(games, reverse = True, key = lambda x : x.score)[0]
 
