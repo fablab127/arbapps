@@ -22,11 +22,25 @@ class Optimizer():
 
     @property
     def deltar(self):
-        return sum([v1 != v2 for line in self.world for (v1, v2) in zip(line[1:], line[:-1])])
+        somme = 0
+        for line in self.world:
+            current = line[0]
+            for val in line[1:]:
+                if val != current:
+                    somme += 1
+                current = val
+        return somme
 
     @property
     def deltac(self):
-        return sum([v1 != v2 for line in self.world.T for (v1, v2) in zip(line[1:], line[:-1])])
+        somme = 0
+        for col in self.world.T:
+            current = col[0]
+            for val in col[1:]:
+                if val != current:
+                    somme += 1
+                current = val
+        return somme
 
     @property
     def L(self):

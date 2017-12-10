@@ -26,11 +26,25 @@ class Optimizer():
 
     @property
     def deltar(self):
-        return sum([v1 != v2 for line in self.world for (v1, v2) in zip(line[1:], line[:-1])])
+        somme = 0
+        for line in self.world:
+            current = line[0]
+            for val in line[1:]:
+                if val != current:
+                    somme += 1
+                current = val
+        return somme
 
     @property
     def deltac(self):
-        return sum([v1 != v2 for line in self.world.T for (v1, v2) in zip(line[1:], line[:-1])])
+        somme = 0
+        for col in self.world.T:
+            current = col[0]
+            for val in col[1:]:
+                if val != current:
+                    somme += 1
+                current = val
+        return somme
 
     @property
     def L(self):
@@ -147,7 +161,8 @@ class TetrisIa(Tetris):
 import random as rd
 
 def evolve():
-    taille_pop = 100
+    print('good')
+    taille_pop = 5
     n_epoch = 10
     muta_rate = 1/20
     keep_perc = 0.5
@@ -162,7 +177,7 @@ def evolve():
             print('Time elapsed : %s' % (round(time.time() - t)), end = ' ; ')
             print('Time spent building worlds : %s' % (round(game.timebuild)))
         games_sorted = sorted(games, reverse = True, key = lambda x : x.score)
-        keep = [games_sorted][:keep_idx]
+        keep = games_sorted[:keep_idx]
         games = deepcopy(keep)
         for _ in range(taille_pop//2):
             parents = [rd.choice(keep) for _ in range(2)]
