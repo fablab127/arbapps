@@ -53,7 +53,7 @@ class Tetromino(object):
     def get_value(self):
         return numpy.rot90(numpy.array(self.types[self.type], dtype=int), self.rotated)
 
-import traceback
+
 class Tetris(Application):
     def __init__(self):
         Application.__init__(self, touch_mode='quadridirectional')
@@ -180,10 +180,12 @@ class Tetris(Application):
 
     def wait_for_timeout_or_event(self, allow_events=True):
         t0 = time.time()
-        while time.time()-t0 < 1./self.speed:
-            time.sleep(0.07)
+        duration_step = 1./self.speed
+        while time.time()-t0 < duration_step:
+            time.sleep(duration_step/7.)   # Read events 7 times a step
             if allow_events and self.process_events():
                 return
+
 
     def check_and_delete_full_lines(self):
         """

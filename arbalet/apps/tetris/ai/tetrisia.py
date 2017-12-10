@@ -71,7 +71,6 @@ class Optimizer():
                     value_side_two = 0
         return puit
 
-import traceback
 class TetrisIa(Tetris):
     def __init__(self, optimizer = None):
         Tetris.__init__(self)
@@ -80,8 +79,7 @@ class TetrisIa(Tetris):
         # Delacherrie 
         if optimizer is None : self.optimizer = Optimizer(*(-1, 2.5, -1, -1, -4, -1))
         else : self.optimizer = optimizer
-        
-
+        self.speed = 10   # Execute game in fast mode (all waiting times are faster)
 
     def build_best_world(self):
         tetro_type = self.tetromino.type
@@ -159,9 +157,7 @@ class TetrisIa(Tetris):
         elif self.dico_actions['rotate'] > 0:
             self.command['rotate'] = True
             self.dico_actions['rotate'] = self.dico_actions['rotate'] - 1
-        print(self.command)
-        print(self.dico_actions)
-        #raw_input()
+        #print(self.dico_actions)
         return self.traiter_events()
 
 
