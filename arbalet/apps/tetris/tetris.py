@@ -32,8 +32,8 @@ class Tetromino(object):
                    [5, 5]]}
     colors = ['black', 'cyan', 'green', 'deeppink', 'yellow', 'orangered']
 
-    def __init__(self, px, py, height, width):
-        self.type = random.choice(list(self.types.keys()))
+    def __init__(self, px, py, height, width, type_=None):
+        self.type = random.choice(list(self.types.keys())) if type_ is None else type_
         self.rotated = 0
         self.position = [px-len(self.get_value())+1, py]
         self.height = height
@@ -53,7 +53,7 @@ class Tetromino(object):
     def get_value(self):
         return numpy.rot90(numpy.array(self.types[self.type], dtype=int), self.rotated)
 
-
+import traceback
 class Tetris(Application):
     def __init__(self):
         Application.__init__(self, touch_mode='quadridirectional')
@@ -115,6 +115,9 @@ class Tetris(Application):
             elif event['key']=='left':
                 self.command['left'] = event['type']=='down'
 
+        self.traiter_events()
+
+    def traiter_events(self):
         changes_pending = self.command['left'] or self.command['right'] or self.command['rotate']
         if changes_pending:
             old_position = deepcopy(self.tetromino.position)
@@ -205,16 +208,16 @@ class Tetris(Application):
         return len(lines)
 
 
-    def new_tetromino(self):
+    def new_tetromino(self, gui=True):
         """
         Brings a new tetromino in the scene and make it falling until touchdown
         :return: The number of steps before touchdown (1 step only = gameover)
         """
+        self.first_wait = True
         self.touchdown = False
         self.tetromino = Tetromino(0, self.width/2, self.height, self.width)
-        steps = 0
+        self.steps = 0
         while not self.touchdown:
-
             self.old_grid_empty = deepcopy(self.grid)
             self.draw_tetromino()
             if self.touchdown:
@@ -226,8 +229,8 @@ class Tetris(Application):
                 self.tetromino.falldown()
             self.wait_for_timeout_or_event(not self.touchdown)  # In case of touchdown do not modify this tetro again
                                                                 # so we disable events
-            steps += 1
-        return steps
+            self.steps += 1
+        return self.steps
 
 
     def update_view(self):
@@ -239,7 +242,7 @@ class Tetris(Application):
 
     def run(self):
         while self.playing:
-            if self.new_tetromino()==1:
+            if self.new_tetromino(gui=True)==1:
                 print("GAME OVER")
                 print("You scored", self.score)
                 break
