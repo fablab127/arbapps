@@ -93,7 +93,7 @@ class TetrisIa(Tetris):
         # Delacherrie 
         if optimizer is None : self.optimizer = Optimizer(*(-1, 2.5, -1, -1, -4, -1))
         else : self.optimizer = optimizer
-        self.speed = 10   # Execute game in fast mode (all waiting times are faster)
+        self.speed = 30   # Execute game in fast mode (all waiting times are faster)
 
     def build_best_world(self):
         tetro_type = self.tetromino.type
