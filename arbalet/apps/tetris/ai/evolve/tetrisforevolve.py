@@ -12,7 +12,6 @@ import numpy
 import pygame
 from copy import deepcopy
 from arbalet.core import Application
-from .music import Music
 
 class Tetromino(object):
     types = {'i' : [[1],
@@ -53,19 +52,18 @@ class Tetromino(object):
     def get_value(self):
         return numpy.rot90(numpy.array(self.types[self.type], dtype=int), self.rotated)
 
-
+import traceback
 class Tetris(Application):
     def __init__(self):
-        Application.__init__(self, touch_mode='quadridirectional')
+        #Application.__init__(self, touch_mode='quadridirectional')
+        self.height, self.width = 20, 20
         self.grid = numpy.zeros([self.height, self.width], dtype=int)
         self.old_grid = deepcopy(self.grid)
-        self.speed = 2  # Speed of tetromino fall in Hertz
         self.score = 0
         self.playing = True
         self.tetromino = None
         self.command = {'left': False, 'right': False, 'down': False, 'rotate': False}  # User commands (joy/keyboard)
         self.touchdown = False  # True if the tetro has reached the floor
-        self.music = Music()
 
     def process_events(self):
         """
@@ -152,15 +150,6 @@ class Tetris(Application):
             self.tetromino.rotate()  # If the rotation creates a collision, rotate again
         self.grid = before_rotation
 
-    def check_level_up(self):
-        if self.score/25+1>=self.speed:
-            self.music.level_end()
-            self.speed += 1
-            text = "Level {}".format(self.speed-1)
-            print(text)
-            self.model.write(text, "navy")
-            self.music.level_up()
-
     def draw_tetromino(self):
         self.touchdown = False
         for x, z in enumerate(self.tetromino.get_value()):
@@ -180,12 +169,10 @@ class Tetris(Application):
 
     def wait_for_timeout_or_event(self, allow_events=True):
         t0 = time.time()
-        duration_step = 1./self.speed
-        while time.time()-t0 < duration_step:
-            time.sleep(duration_step/7.)   # Read events 7 times a step
+        while time.time()-t0 < 1./self.speed:
+            time.sleep(0.07)
             if allow_events and self.process_events():
                 return
-
 
     def check_and_delete_full_lines(self):
         """
@@ -215,11 +202,12 @@ class Tetris(Application):
         Brings a new tetromino in the scene and make it falling until touchdown
         :return: The number of steps before touchdown (1 step only = gameover)
         """
-        self.first_wait = True
         self.touchdown = False
         self.tetromino = Tetromino(0, self.width/2, self.height, self.width)
         self.steps = 0
+        self.tout_premier_step = True
         while not self.touchdown:
+
             self.old_grid_empty = deepcopy(self.grid)
             self.draw_tetromino()
             if self.touchdown:
@@ -232,6 +220,8 @@ class Tetris(Application):
             self.wait_for_timeout_or_event(not self.touchdown)  # In case of touchdown do not modify this tetro again
                                                                 # so we disable events
             self.steps += 1
+            self.tout_premier_step = False
+            print(self.steps)
         return self.steps
 
 
