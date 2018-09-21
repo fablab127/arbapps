@@ -23,6 +23,7 @@ from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
 import petname
+from json import dumps 
 from time import time
 import logging
 import socket
@@ -55,12 +56,13 @@ def requires_auth(f):
 
 
 class SnapServer(Application):
+    OFF = "turnoff"
     def __init__(self, port, argparser=None):
         Application.__init__(self, argparser)
         self.port = int(port)
         self.flask = Flask(__name__)
         logging.basicConfig(level=logging.DEBUG)
-        self.current_auth_nick = "turnoff"
+        self.current_auth_nick = self.OFF 
         self.nicknames = {}
         self.lock = RLock()
         CORS(self.flask)
@@ -74,11 +76,20 @@ class SnapServer(Application):
 
     def route(self):
         self.flask.route('/admin', methods=['GET', 'POST'])(self.render_admin_page)
-        #self.flask.route('/set_pixel_rgb', methods=['POST'])(self.set_pixel_rgb)
+        self.flask.route('/admin/nicknames', methods=['GET'])(self.get_admin_nicknames)
+        self.flask.route('/admin/active_nickname', methods=['GET'])(self.get_admin_active_nickname)
         self.flask.route('/set_rgb_matrix', methods=['POST'])(self.set_rgb_matrix)
         self.flask.route('/is_authorized/<nickname>', methods=['GET'])(self.is_authorized)
         self.flask.route('/authorize', methods=['POST'])(self.authorize)
         self.flask.route('/get_nickname', methods=['GET'])(self.get_nickname)
+
+    @requires_auth
+    def get_admin_active_nickname(self):
+        return dumps(self.current_auth_nick)
+    @requires_auth
+    def get_admin_nicknames(self):
+        return dumps(list(self.nicknames.keys()))
+
 
     def check_nicknames_validity(self):
         with self.lock:
@@ -88,20 +99,22 @@ class SnapServer(Application):
                     temp_dict[k] = v
                 else:
                     if k == self.current_auth_nick:
-                        self.current_auth_nick = "turnoff"
+                        self.current_auth_nick = self.OFF
             self.nicknames = temp_dict
 
     # Uncomment to require authentication
     #@requires_auth
     def render_admin_page(self):
-        res = render_template('admin.html', nicknames=self.nicknames.keys(), authorized_nick=self.current_auth_nick)
+        res = render_template('admin.html')
         return res
 
     def authorize(self):
+        nick = request.get_data()
         with self.lock:
-            self.current_auth_nick = request.get_data()
-            self.erase_all()
-        return ''
+            if nick in list(self.nicknames.keys()) + [self.OFF]:
+                self.current_auth_nick = nick
+                self.erase_all()
+                return ''
 
     @staticmethod
     def scale(v):
