@@ -88,7 +88,7 @@ class SnapServer(Application):
         return dumps(self.current_auth_nick)
     @requires_auth
     def get_admin_nicknames(self):
-        return dumps(list(self.nicknames.keys()))
+        return dumps(sorted(self.nicknames.keys(), key=lambda x: self.nicknames[x]))
 
 
     def check_nicknames_validity(self):
