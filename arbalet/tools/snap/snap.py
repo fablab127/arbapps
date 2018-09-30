@@ -88,17 +88,17 @@ class SnapServer(Application):
         return dumps(self.current_auth_nick)
     @requires_auth
     def get_admin_nicknames(self):
-        return dumps(sorted(self.nicknames.keys(), key=lambda x: self.nicknames[x]))
+        return dumps(sorted(self.nicknames.keys(), key=lambda x: self.nicknames[x]["appeared"]))
 
 
     def check_nicknames_validity(self):
         with self.lock:
             temp_dict = {}
-            for k, v in self.nicknames.iteritems():
-                if time() - v < 20:
-                    temp_dict[k] = v
+            for nick, timestamps in self.nicknames.items():
+                if time() - timestamps["last_seen"] < 20:
+                    temp_dict[nick] = timestamps
                 else:
-                    if k == self.current_auth_nick:
+                    if nick == self.current_auth_nick:
                         self.current_auth_nick = self.OFF
             self.nicknames = temp_dict
 
@@ -150,7 +150,8 @@ class SnapServer(Application):
 
     def is_authorized(self, nickname):
         with self.lock:
-            self.nicknames[nickname] = time()
+            if nickname in self.nicknames:
+                self.nicknames[nickname]["last_seen"] = time()
         # update user table
         self.check_nicknames_validity()
         return str(nickname == self.current_auth_nick)
@@ -160,7 +161,7 @@ class SnapServer(Application):
         with self.lock:
             while rand_id in self.nicknames.keys():
                 rand_id = petname.generate()
-            self.nicknames[rand_id] = time()
+            self.nicknames[rand_id] = {"appeared": time(), "last_seen": time()}
         return rand_id
 
     def run(self):
